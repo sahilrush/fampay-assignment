@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/sahilrush/src/models"
@@ -36,9 +37,21 @@ type ApiResponse struct {
 func (services *YoutubeService) FetchVideos(query string) {
 	client := &http.Client{}
 	url := "https://www.googleapis.com/youtube/v3/search"
-	apiKey := os.Getenv("YOUTUBE_API_KEY")
+	apiKeyStr := os.Getenv("YOUTUBE_API_KEY")
+
+	apiKeys := strings.Split(apiKeyStr, ",")
+	if len(apiKeys) == 0 {
+		log.Fatalf("No api key are found")
+	}
+
+	keyIndex := 0
 
 	for {
+
+		//get the current api key and iterarte thorugh it
+		apiKey := apiKeys[keyIndex]
+		keyIndex = (keyIndex + 1) % len(apiKeys)
+
 		req, err := http.NewRequest("GET", url, nil)
 		if err != nil {
 			log.Fatalf("failed to connect to database %v", err)
