@@ -3,7 +3,7 @@ package models
 import "time"
 
 type Video struct {
-	ID          uint      `json:"id" gorm:"primary_key"`
+	ID          string    `gorm:"primaryKey;column:id" json:"id"`
 	Title       string    `json:"title"`
 	Description string    `json:"description"`
 	PublishedAt time.Time `json:"publishedAt"`

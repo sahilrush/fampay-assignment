@@ -12,21 +12,25 @@ import (
 var DB *gorm.DB
 
 func InitDB() {
+	if err := godotenv.Load(); err != nil {
+		log.Fatalf("Error loading .env file: %v", err)
+	}
 
-	err := godotenv.Load()
+	// Construct DSN from environment variables
+	dsn := "host=" + os.Getenv("DB_HOST") +
+		" user=" + os.Getenv("DB_USER") +
+		" password=" + os.Getenv("DB_PASSWORD") +
+		" dbname=" + os.Getenv("DB_NAME") +
+		" port=" + os.Getenv("DB_PORT") +
+		" sslmode=" + os.Getenv("DB_SSLMODE") +
+		" TimeZone=" + os.Getenv("DB_TIMEZONE")
+
+	// Initialize database
+	var err error
+	DB, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
-		log.Fatalf("Error loading .env ")
+		log.Fatalf("Failed to connect to the database: %v", err)
 	}
 
-	dsn := os.Getenv("DATABASE_URL")
-	if dsn == "" {
-		log.Fatalf("DATABASE_URL enivorment variable is not there")
-
-		DB, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
-		if err != nil {
-			log.Fatalf("failed to connect to database: %v", err)
-		}
-		log.Println("DATABASE Connected Successfully")
-	}
-
+	log.Println("Database connected successfully!")
 }
