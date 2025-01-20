@@ -3,11 +3,10 @@ package services
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"os"
-	"strings"
 	"time"
 
 	"github.com/sahilrush/src/models"
@@ -33,75 +32,89 @@ type ApiResponse struct {
 	} `json:"items"`
 }
 
-// FetchVideos fetches the latest Youtube videos and stores them
+// FetchVideos fetches the latest Youtube videos and stores them in the database
 func (services *YoutubeService) FetchVideos(query string) {
 	client := &http.Client{}
 	url := "https://www.googleapis.com/youtube/v3/search"
-	apiKeyStr := os.Getenv("YOUTUBE_API_KEY")
+	apiKey := os.Getenv("API_KEY")
 
-	apiKeys := strings.Split(apiKeyStr, ",")
-	if len(apiKeys) == 0 {
-		log.Fatalf("No api key are found")
-	}
-
-	keyIndex := 0
+	fmt.Print(apiKey)
 
 	for {
-
-		//get the current api key and iterarte thorugh it
-		apiKey := apiKeys[keyIndex]
-		keyIndex = (keyIndex + 1) % len(apiKeys)
-
 		req, err := http.NewRequest("GET", url, nil)
 		if err != nil {
-			log.Fatalf("failed to connect to database %v", err)
+			log.Fatalf("failed to create request: %v", err)
 			time.Sleep(10 * time.Second)
 			continue
 		}
 
-		//adding query parameter
+		// Adding query parameters
 		q := req.URL.Query()
 		q.Add("part", "snippet")
 		q.Add("q", query)
 		q.Add("type", "video")
-		q.Add("order", "date")
+		q.Add("order", "date") // You can adjust this to "viewCount" or "relevance"
 		q.Add("key", apiKey)
-		q.Add("maxResults", "5")
+		q.Add("maxResults", "10") // Increased maxResults for testing
 		req.URL.RawQuery = q.Encode()
 
 		resp, err := client.Do(req)
 		if err != nil {
-			fmt.Println("Error making youtube api request:", err)
+			fmt.Println("Error making YouTube API request:", err)
 			time.Sleep(10 * time.Second)
 			continue
 		}
 		defer resp.Body.Close()
 
-		//parse the response
-		body, err := ioutil.ReadAll(resp.Body)
+		// Parse the response
+		body, err := io.ReadAll(resp.Body)
 		if err != nil {
-			fmt.Println("error reading response Body", err)
+			fmt.Println("Error reading response body:", err)
 			time.Sleep(10 * time.Second)
 			continue
 		}
 
+		// Log the raw API response
+		fmt.Printf("Raw YouTube API Response: %s\n", string(body))
+
 		var apiResp ApiResponse
 		if err := json.Unmarshal(body, &apiResp); err != nil {
-			fmt.Println("error unmarshalling response", err)
+			fmt.Println("Error unmarshalling response:", err)
 			continue
 		}
 
-		//save videos to database
+		// Check if the response contains any items
+		if len(apiResp.Items) == 0 {
+			fmt.Println("No results found for query:", query)
+		}
+
+		// Save videos to the database
 		for _, item := range apiResp.Items {
-			publishedAt, _ := time.Parse(time.RFC3339, item.Snippet.PublishedAt)
-			videos := models.Video{
+			publishedAt, err := time.Parse(time.RFC3339, item.Snippet.PublishedAt)
+			if err != nil {
+				fmt.Printf("Error parsing published date: %v\n", err)
+				continue
+			}
+
+			video := models.Video{
 				Title:       item.Snippet.Title,
 				Description: item.Snippet.Description,
 				PublishedAt: publishedAt,
 				Thumbnails:  item.Snippet.Thumbnails.High.URL,
 			}
-			services.DB.Create(&videos)
+
+			fmt.Print("Video ", video)
+
+			// Don't manually set the ID—GORM will auto-generate it
+			if err := services.DB.Create(&video).Error; err != nil {
+				fmt.Println("Error inserting video into the database:", err)
+			} else {
+				fmt.Println("Video inserted successfully:", video)
+			}
+
 		}
+
+		// Wait before making the next API call
 		time.Sleep(10 * time.Second)
 	}
 }
