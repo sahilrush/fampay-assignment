@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"os"
 	"time"
@@ -32,20 +31,30 @@ type ApiResponse struct {
 	} `json:"items"`
 }
 
-// FetchVideos fetches the latest Youtube videos and stores them in the database
-func (services *YoutubeService) FetchVideos(query string) {
+// FetchVideos fetches the latest Youtube videos, stores them in the database, and returns a summary response
+func (services *YoutubeService) FetchVideos(query string) (string, error) {
 	client := &http.Client{}
 	url := "https://www.googleapis.com/youtube/v3/search"
-	apiKey := os.Getenv("API_KEY")
 
-	fmt.Print(apiKey)
+	// Get all API keys from the environment
+	apiKeys := []string{
+		os.Getenv("API_KEY_1"),
+		os.Getenv("API_KEY_2"),
+	}
 
-	for {
+	// Ensure we have at least one API key
+	if len(apiKeys) == 0 {
+		return "", fmt.Errorf("no API keys found in environment variables")
+	}
+
+	// Loop through the API keys
+	for i := 0; i < len(apiKeys); i++ {
+		apiKey := apiKeys[i]
+
+		// Make the request with the current API key
 		req, err := http.NewRequest("GET", url, nil)
 		if err != nil {
-			log.Fatalf("failed to create request: %v", err)
-			time.Sleep(10 * time.Second)
-			continue
+			return "", fmt.Errorf("failed to create request: %v", err)
 		}
 
 		// Adding query parameters
@@ -58,42 +67,45 @@ func (services *YoutubeService) FetchVideos(query string) {
 		q.Add("maxResults", "10") // Increased maxResults for testing
 		req.URL.RawQuery = q.Encode()
 
+		// Perform the request
 		resp, err := client.Do(req)
 		if err != nil {
-			fmt.Println("Error making YouTube API request:", err)
-			time.Sleep(10 * time.Second)
-			continue
+			return "", fmt.Errorf("error making YouTube API request: %v", err)
 		}
 		defer resp.Body.Close()
 
-		// Parse the response
+		// Read the response body
 		body, err := io.ReadAll(resp.Body)
 		if err != nil {
-			fmt.Println("Error reading response body:", err)
-			time.Sleep(10 * time.Second)
-			continue
+			return "", fmt.Errorf("error reading response body: %v", err)
 		}
 
 		// Log the raw API response
 		fmt.Printf("Raw YouTube API Response: %s\n", string(body))
 
+		// Check if the error code is 403 (Quota exceeded)
 		var apiResp ApiResponse
-		if err := json.Unmarshal(body, &apiResp); err != nil {
-			fmt.Println("Error unmarshalling response:", err)
+		if resp.StatusCode == 403 {
+			// If quota is exceeded, print an error and continue to the next API key
+			fmt.Println("Quota exceeded for API key:", apiKey)
 			continue
+		}
+
+		// If the response is valid, unmarshal the JSON
+		if err := json.Unmarshal(body, &apiResp); err != nil {
+			return "", fmt.Errorf("error unmarshalling response: %v", err)
 		}
 
 		// Check if the response contains any items
 		if len(apiResp.Items) == 0 {
-			fmt.Println("No results found for query:", query)
+			return "No results found for query: " + query, nil
 		}
 
 		// Save videos to the database
 		for _, item := range apiResp.Items {
 			publishedAt, err := time.Parse(time.RFC3339, item.Snippet.PublishedAt)
 			if err != nil {
-				fmt.Printf("Error parsing published date: %v\n", err)
-				continue
+				return "", fmt.Errorf("error parsing published date: %v", err)
 			}
 
 			video := models.Video{
@@ -103,18 +115,18 @@ func (services *YoutubeService) FetchVideos(query string) {
 				Thumbnails:  item.Snippet.Thumbnails.High.URL,
 			}
 
-			fmt.Print("Video ", video)
-
 			// Don't manually set the ID—GORM will auto-generate it
 			if err := services.DB.Create(&video).Error; err != nil {
-				fmt.Println("Error inserting video into the database:", err)
+				return "", fmt.Errorf("error inserting video into the database: %v", err)
 			} else {
 				fmt.Println("Video inserted successfully:", video)
 			}
-
 		}
 
-		// Wait before making the next API call
-		time.Sleep(10 * time.Second)
+		// Return a success message with a count of videos fetched
+		return fmt.Sprintf("Successfully fetched and inserted %d videos for query: %s", len(apiResp.Items), query), nil
 	}
+
+	// If all keys fail, return an error
+	return "", fmt.Errorf("all API keys have exceeded their quota")
 }

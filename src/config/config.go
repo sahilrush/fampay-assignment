@@ -5,7 +5,6 @@ import (
 	"os"
 
 	"github.com/joho/godotenv"
-	"github.com/sahilrush/src/models"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -37,10 +36,4 @@ func InitDB() {
 
 	log.Println("Database connected successfully!")
 
-	// Migrate the schema (create or update the `videos` table)
-	if err := DB.AutoMigrate(&models.Video{}); err != nil {
-		log.Fatalf("Error running migrations: %v", err)
-	}
-
-	log.Println("Database migrated successfully!")
 }

@@ -1,6 +1,9 @@
 package main
 
 import (
+	"fmt"
+	"os"
+
 	"github.com/gin-gonic/gin"
 	"github.com/sahilrush/src/config"
 	"github.com/sahilrush/src/controllers"
@@ -17,7 +20,17 @@ func main() {
 
 	config.DB.AutoMigrate(&models.Video{})
 
-	go youtubeService.FetchVideos("programming")
+	searchQuery := os.Getenv("SEARCH_QUERY")
+
+	go func() {
+		response, err := youtubeService.FetchVideos(searchQuery)
+		if err != nil {
+			fmt.Println("Error fetching videos:", err)
+		} else {
+			fmt.Println("Response from YouTube API:", response)
+		}
+	}()
+
 	r := gin.Default()
 
 	// Create video controller

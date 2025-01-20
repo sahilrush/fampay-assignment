@@ -4,15 +4,7 @@ services:
     build: .
     ports:
       - "8080:8080"
-    environment:
-      - DB_HOST=db
-      - DB_USER=postgres
-      - DB_PASSWORD=postgres
-      - DB_NAME=postgres
-      - DB_PORT=5432
-      - DB_SSLMODE=disable
-      - DB_TIMEZONE=UTC
-      - API_KEYS=${API_KEYS}
+    env_file: .env
     depends_on:
       - db
     volumes:
@@ -22,13 +14,13 @@ services:
     image: postgres:16-alpine
     environment:
       - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=postgres
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=fetcher
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+      # - ./init.sql:/docker-entrypoint-initdb.d/init.sql
 
 volumes:
   postgres_data:
