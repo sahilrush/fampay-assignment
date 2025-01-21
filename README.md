@@ -57,7 +57,8 @@ pnpm install
 ```bash
 pnpm dev
 ```
-The development server will start at [http://localhost:5173](http://localhost:5173).
+The development server will start at [http://localhost:3000](http://localhost:3000).
+If Facing any difficulty to Open Open it on Incognito
 
 #### Build for Production
 ```bash
