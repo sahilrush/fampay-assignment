@@ -3,6 +3,7 @@
 
 
 A full-stack application that fetches YouTube videos based on search queries and stores them in a PostgreSQL database. Built with the Gin framework for the backend API and Vite for the frontend.
+Video Link - https://www.floik.com/flos/trr6/967p/2a4a86ed.html?show-author=true
 
 ## Features
 - Periodic YouTube video fetching based on configured search queries
