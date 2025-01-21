@@ -1,9 +1,10 @@
-# YouTube Fetcher
-<img width="1470" alt="Screenshot 2025-01-20 at 10 57 51 AM" src="https://github.com/user-attachments/assets/eb18f559-ce32-497a-b217-b0dd10655495" />
+# FamPay Assignment(Youtube Fetcher)
 
+<img width="1470" alt="Screenshot 2025-01-20 at 10 57 51 AM" src="https://github.com/user-attachments/assets/eb18f559-ce32-497a-b217-b0dd10655495" />
+
+[Video Link - https://www.floik.com/flos/trr6/967p/2a4a86ed.html?show-author=true](https://www.floik.com/flos/trr6/967p/2a4a86ed.html?show-author=true)
 
 A full-stack application that fetches YouTube videos based on search queries and stores them in a PostgreSQL database. Built with the Gin framework for the backend API and Vite for the frontend.
-Video Link - https://www.floik.com/flos/trr6/967p/2a4a86ed.html?show-author=true
 
 ## Features
 - Periodic YouTube video fetching based on configured search queries
@@ -59,7 +60,7 @@ pnpm install
 pnpm dev
 ```
 The development server will start at [http://localhost:3000](http://localhost:3000).
-If Facing any difficulty to Open  it on Incognito
+If facing any difficulty, try opening it in Incognito mode.
 
 #### Build for Production
 ```bash
@@ -83,3 +84,4 @@ Lists stored videos with pagination support.
 #### Query Parameters:
 - `page` (default: 1): Page number
 - `limit` (default: 10): Number of items per page
+
