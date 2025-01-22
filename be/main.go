@@ -19,7 +19,7 @@ func main() {
 	youtubeService := services.YoutubeService{DB: config.DB}
 
 	config.DB.AutoMigrate(&models.Video{})
-
+	//will fetch every 10 sec
 	fetchInterval := 10 * time.Second
 	searchQuery := os.Getenv("SEARCH_QUERY")
 
