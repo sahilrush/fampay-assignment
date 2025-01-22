@@ -16,6 +16,7 @@ type YoutubeService struct {
 	DB *gorm.DB
 }
 
+// api response
 type ApiResponse struct {
 	Items []struct {
 		Snippet struct {
