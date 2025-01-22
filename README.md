@@ -4,6 +4,8 @@
 
 A full-stack application that fetches YouTube videos based on search queries and stores them in a PostgreSQL database. Built with the Gin framework for the backend API and Vite for the frontend.
 
+Video Link - https://www.floik.com/flos/trr6/ttsn/f644e590.html?show-author=true
+
 ## Features
 - Periodic YouTube video fetching based on configured search queries
 - REST API to retrieve stored videos
@@ -57,7 +59,7 @@ pnpm install
 ```bash
 pnpm dev
 ```
-The development server will start at [http://localhost:5173](http://localhost:5173).
+The development server will start at [http://localhost:3000](http://localhost:3000).
 
 #### Build for Production
 ```bash
