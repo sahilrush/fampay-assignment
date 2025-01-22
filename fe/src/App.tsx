@@ -48,8 +48,8 @@ function App() {
 
         const params = new URLSearchParams({
           page: page.toString(),
-          // search: search,
-          // sort: sortOrder,
+          search: search,
+          sort: sortOrder,
           limit: "6"
         });
         

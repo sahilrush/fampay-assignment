@@ -1,8 +1,8 @@
 package main
 
 import (
-	"fmt"
 	"os"
+	"time"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -20,14 +20,18 @@ func main() {
 
 	config.DB.AutoMigrate(&models.Video{})
 
+	fetchInterval := 10 * time.Second
 	searchQuery := os.Getenv("SEARCH_QUERY")
 
+	// Start periodic fetch in a goroutine
 	go func() {
-		response, err := youtubeService.FetchVideos(searchQuery)
-		if err != nil {
-			fmt.Println("Error fetching videos:", err)
-		} else {
-			fmt.Println("Response from YouTube API:", response)
+		for {
+			_, err := youtubeService.FetchVideos(searchQuery)
+			if err != nil {
+				// Log error but continue
+				println("Error fetching videos:", err.Error())
+			}
+			time.Sleep(fetchInterval)
 		}
 	}()
 
